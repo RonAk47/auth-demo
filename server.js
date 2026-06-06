@@ -21,10 +21,12 @@ app.use(express.json());
 const userRouter = require('./routes/user.route');
 const homeRouter = require('./routes/home.route');
 const adminRouter = require('./routes/admin.route');
+const imageRouter = require('./routes/image.route');
 
 app.use('/api/users', userRouter);
 app.use('/api/home', homeRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/image', imageRouter);
 
 app.listen(PORT, () => {
     console.log(`App is listening on ${PORT}`);
