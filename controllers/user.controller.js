@@ -110,7 +110,95 @@ const loginUser = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.userInfo.userId;
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword && !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Both current and new password are required'
+            });
+        }
+        if (currentPassword === newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current and new password must be different'
+            });
+        }
+
+        //Validate if currentPassword is correct
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(403).json({
+                success: false,
+                message: "User doesn't exists"
+            });
+        }
+
+        const isPasswordMatch = await bcrypt.compare(
+            currentPassword,
+            user.password
+        );
+
+        if (!isPasswordMatch) {
+            return res.status(403).json({
+                success: false,
+                message: 'Invalid current password, Please try again'
+            });
+        }
+
+        //Allow to change pass if old password is valid
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        //re-generate token
+        try {
+            const accessToken = await jwt.sign(
+                {
+                    userId: user._id,
+                    userName: user.username,
+                    role: user.role
+                },
+                process.env.JWT_SECRET_KEY,
+                {
+                    expiresIn: '15m'
+                }
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: 'Password changed successfully',
+                accessToken
+            });
+        } catch (err) {
+            console.error(
+                'Something went wrong while re-generating accessToken',
+                err
+            );
+            return res.stauts(200).json({
+                success: true,
+                message:
+                    'Password changed successfully, please login again with new password to continue.'
+            });
+        }
+    } catch (err) {
+        console.error('Error while changing the password', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong while changing the password'
+        });
+    }
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    changePassword
 };
