@@ -5,6 +5,7 @@ const {
 const Image = require('../models/image.model');
 const fs = require('fs');
 const { USER_ROLES } = require('../utils/constants');
+const mongoose = require('mongoose');
 
 const uploadImage = async (req, res) => {
     try {
@@ -85,10 +86,10 @@ const fetchImages = async (req, res) => {
 const deleteImage = async (req, res) => {
     try {
         const imageId = req.params.id;
-        if (!imageId) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({
                 success: false,
-                message: 'Image id is required'
+                message: 'Image id is invalid'
             });
         }
 
